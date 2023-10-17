@@ -1,0 +1,54 @@
+{
+    "tasks":[
+        {
+            "taskName": "eat lunch",
+            "taskDesc": "a nice bullet ant sandwich",
+            "completed": false
+        },
+        {
+            "taskName": "defend self",
+            "taskDesc": "fart lungs onto attacker",
+            "completed": false
+        },
+        {
+            "taskName": "mow ceiling",
+            "taskDesc": "mow  the indoor grass",
+            "completed": false
+        },
+        {
+            "taskName": "baking",
+            "taskDesc": "bake some bread",
+            "completed": false
+        },
+        {
+            "taskName": "get coal",
+            "taskDesc": "visit the coal mine",
+            "completed": false
+        },
+        {
+            "taskName": "feign insanity",
+            "taskDesc": "make loud borking sounds in public",
+            "completed": false
+        },
+        {
+            "taskName": "perfect hooping",
+            "taskDesc": "attempt hula hooping with a lead hula hoop",
+            "completed": false
+        },
+        {
+            "taskName": "swim the dog",
+            "taskDesc": "put the dog in scuba gear and walk them underwater",
+            "completed": false
+        },
+        {
+            "taskName": "walk the fish",
+            "taskDesc": "give the fish SCABA gear and fake legs",
+            "completed": false
+        },
+        {
+            "taskName": "create hat",
+            "taskDesc": "make many tin foil hats to keep the aliens away",
+            "completed": false
+        }
+    ]
+}
