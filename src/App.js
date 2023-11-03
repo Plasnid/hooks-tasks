@@ -1,7 +1,10 @@
-
 import { useState, useEffect } from "react";
 import './index.css';
 import './App.css';
+
+import { collection, getDocs, addDoc } from "firebase/firestore";
+import {db} from './firebase-config';
+
 
 function TaskForm({taskAddAction}){
   
@@ -20,10 +23,10 @@ function TaskForm({taskAddAction}){
       </form>
   )
 }
-function Task({key, arrPos, tName, tDesc, tDone, delOnClick, onClick}){
+function Task({arrPos, tName, tDesc, tDone, delOnClick, onClick}){
   return (
-    <li>
-      <input type="checkbox" key={key} checked={tDone} onChange={onClick}/>
+    <li key={arrPos}>
+      <input type="checkbox" checked={tDone} onChange={onClick}/>
       {tName}: {tDesc}
       &nbsp;<button onClick={delOnClick}>Delete Task</button>
     </li>
@@ -37,7 +40,7 @@ function TaskList({tasks, delOnClick, onClick}){
       <ul>
         {tasks.map((task, index) => {
           return (
-          <Task key={index}
+          <Task
           arrPos={index} 
           tName={task.taskName} 
           tDesc={task.taskDesc} 
@@ -51,14 +54,45 @@ function TaskList({tasks, delOnClick, onClick}){
   )
 }
 function App(){
-  const [data, setData] = useState(null);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [data, setData] = useState([]);
+  const [todosLoaded, setTodosLoaded] = useState(false);
+  const [todos, setTodos] = useState([]);
 
-  function addTask(e){
+    const fetchPost = async () => {
+    
+        await getDocs(collection(db, "hooks-tasks"))
+            .then((querySnapshot)=>{   
+                const newData = querySnapshot.docs
+                    //.map((doc) => ({...doc.data(), id:doc.id }));
+                    .map((doc) => ({...doc.data() }));
+                setTodos(newData);                
+                console.log(todos, newData);
+                //
+                console.log(newData);
+                setData(newData);
+                setTodosLoaded(true);
+            })
+    }
+    useEffect(()=>{
+        fetchPost();
+    }, [])
+
+  const addTask = async(e) => {
     e.preventDefault();
     let formSource = new FormData(e.target);
-    let taskList = [...data, {taskName:formSource.get("tName"), taskDesc:formSource.get("tDesc"), completed:false}];
-    setData(taskList);
+    let newTask = {taskName:formSource.get("tName"), taskDesc:formSource.get("tDesc"), completed:false};
+    //
+    try {
+      const docRef = await addDoc(collection(db, "hooks-tasks"), 
+        newTask   
+      );
+      console.log("Document written with ID: ", docRef.id);
+      let taskList = [...data, {taskName:formSource.get("tName"), taskDesc:formSource.get("tDesc"), completed:false}];
+    setData(taskList); 
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+    //
     e.target.reset();
 }
 
@@ -88,31 +122,9 @@ function App(){
     setData(newTasks);
 }
 
-  const fetchTaskList = async () => {
-    try {
-      let response = await fetch('./tasks.json');
-      let json = await response.json();
-      return { success: true, data: json };
-    } catch (error) {
-      console.log(error);
-      return { success: false };
-    }
-  } 
-  useEffect(() => {
-    (async () => {
-      setDataLoaded(false);
-      let res = await fetchTaskList();
-      if (res.success) {
-        console.log(res.data.tasks);
-        setData(res.data.tasks);
-        setDataLoaded(true);
-        console.log(dataLoaded);
-      }
-    })();
-  }, []);
   return (
     <>
-      {dataLoaded ?(
+      {todosLoaded ?(
         <div id="app_home">
           <h1>Get Stuff Done</h1>
           <TaskForm taskAddAction={(e) => addTask(e)}/>
