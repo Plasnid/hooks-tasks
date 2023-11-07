@@ -2,8 +2,12 @@ import { useState, useEffect } from "react";
 import './index.css';
 import './App.css';
 
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, 
+  query, where, getDocs, addDoc, updateDoc, Timestamp, doc, getDoc, deleteDoc } from "firebase/firestore";
 import {db} from './firebase-config';
+
+const tasksRef = collection(db, "taskName");
+
 
 
 function TaskForm({taskAddAction}){
@@ -23,7 +27,7 @@ function TaskForm({taskAddAction}){
       </form>
   )
 }
-function Task({arrPos, tName, tDesc, tDone, delOnClick, onClick}){
+function Task({ arrPos, tName, tDesc, tDone, delOnClick, onClick}){
   return (
     <li key={arrPos}>
       <input type="checkbox" checked={tDone} onChange={onClick}/>
@@ -41,6 +45,7 @@ function TaskList({tasks, delOnClick, onClick}){
         {tasks.map((task, index) => {
           return (
           <Task
+          key={index}
           arrPos={index} 
           tName={task.taskName} 
           tDesc={task.taskDesc} 
@@ -63,8 +68,7 @@ function App(){
         await getDocs(collection(db, "hooks-tasks"))
             .then((querySnapshot)=>{   
                 const newData = querySnapshot.docs
-                    //.map((doc) => ({...doc.data(), id:doc.id }));
-                    .map((doc) => ({...doc.data() }));
+                    .map((doc) => ({...doc.data(), id: doc.id }));
                 setTodos(newData);                
                 console.log(todos, newData);
                 //
@@ -80,14 +84,14 @@ function App(){
   const addTask = async(e) => {
     e.preventDefault();
     let formSource = new FormData(e.target);
-    let newTask = {taskName:formSource.get("tName"), taskDesc:formSource.get("tDesc"), completed:false};
+    let newTask = {taskName:formSource.get("tName"), taskDesc:formSource.get("tDesc"), completed:false,created: Timestamp.now()};
     //
     try {
       const docRef = await addDoc(collection(db, "hooks-tasks"), 
         newTask   
       );
       console.log("Document written with ID: ", docRef.id);
-      let taskList = [...data, {taskName:formSource.get("tName"), taskDesc:formSource.get("tDesc"), completed:false}];
+      let taskList = [...data, {taskName:formSource.get("tName"), taskDesc:formSource.get("tDesc"), completed:false, id:docRef.id}];
     setData(taskList); 
     } catch (e) {
       console.error("Error adding document: ", e);
@@ -105,9 +109,38 @@ function App(){
         return `More to do!`;
     }
     return 'No tasks listed!';
-}
+  }
   //makes a copy of the tasks, swaps the completed status of the task clicked, then saves out the tasks
-  function toggleCompletion(i){
+  const toggleCompletion = async (i )=> {
+    
+    //working code for grabing data by id
+    /**const docRef = doc(db, "hooks-tasks", data[i].id);
+    const docSnap = await getDoc(docRef);
+    try {
+      const docSnap = await getDoc(docRef);
+      console.log(docSnap.data());
+  } catch(error) {
+      console.log(error)
+  }*/
+  // now for the update
+  //  const handleUpdate = async (e) => {
+    //e.preventDefault()
+    const taskDocRef = doc(db, 'hooks-tasks', data[i].id)
+    console.log(data[i].completed);
+    console.log(taskDocRef);
+    try{
+      await updateDoc(taskDocRef, {
+        completed: !data[i].completed
+      })
+      console.log("data update sent");
+      //onClose()
+    } catch (err) {
+      alert(err)
+    }    
+  //}
+  //
+  console.log(i);
+  console.log(data[i].taskName);
     console.log("about to toggle");
     let newTasks = [...data];
     console.log(newTasks);
@@ -116,11 +149,23 @@ function App(){
     console.log(newTasks);
     setData(newTasks);
   };
-  function removeElement(i){
+  const removeElement = async(i )=>{
+    //
+    const taskDocRef = doc(db, 'hooks-tasks', data[i].id)
+    deleteDoc(taskDocRef)
+    .then(() => {
+      console.log("Entire Document has been deleted successfully.")
+  })
+  .catch(error => {
+    console.log(error);
+  })
+
+    //
+
     let newTasks = [...data];
     newTasks.splice(i,1);
     setData(newTasks);
-}
+  }
 
   return (
     <>
