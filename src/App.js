@@ -3,12 +3,8 @@ import './index.css';
 import './App.css';
 
 import { collection, 
-  query, where, getDocs, addDoc, updateDoc, Timestamp, doc, getDoc, deleteDoc } from "firebase/firestore";
+  query, addDoc, updateDoc, Timestamp, doc, deleteDoc, onSnapshot } from "firebase/firestore";
 import {db} from './firebase-config';
-
-const tasksRef = collection(db, "taskName");
-
-
 
 function TaskForm({taskAddAction}){
   
@@ -61,25 +57,18 @@ function TaskList({tasks, delOnClick, onClick}){
 function App(){
   const [data, setData] = useState([]);
   const [todosLoaded, setTodosLoaded] = useState(false);
-  const [todos, setTodos] = useState([]);
-
-    const fetchPost = async () => {
     
-        await getDocs(collection(db, "hooks-tasks"))
-            .then((querySnapshot)=>{   
-                const newData = querySnapshot.docs
-                    .map((doc) => ({...doc.data(), id: doc.id }));
-                setTodos(newData);                
-                console.log(todos, newData);
-                //
-                console.log(newData);
-                setData(newData);
-                setTodosLoaded(true);
-            })
-    }
-    useEffect(()=>{
-        fetchPost();
-    }, [])
+    useEffect(() => {
+      const taskColRef = query(collection(db, 'hooks-tasks'))
+      onSnapshot(taskColRef, (snapshot) => {
+        setData(snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })))
+        setTodosLoaded(true);
+      })
+    },[])
+  
 
   const addTask = async(e) => {
     e.preventDefault();
@@ -91,8 +80,6 @@ function App(){
         newTask   
       );
       console.log("Document written with ID: ", docRef.id);
-      let taskList = [...data, {taskName:formSource.get("tName"), taskDesc:formSource.get("tDesc"), completed:false, id:docRef.id}];
-    setData(taskList); 
     } catch (e) {
       console.error("Error adding document: ", e);
     }
@@ -110,21 +97,7 @@ function App(){
     }
     return 'No tasks listed!';
   }
-  //makes a copy of the tasks, swaps the completed status of the task clicked, then saves out the tasks
   const toggleCompletion = async (i )=> {
-    
-    //working code for grabing data by id
-    /**const docRef = doc(db, "hooks-tasks", data[i].id);
-    const docSnap = await getDoc(docRef);
-    try {
-      const docSnap = await getDoc(docRef);
-      console.log(docSnap.data());
-  } catch(error) {
-      console.log(error)
-  }*/
-  // now for the update
-  //  const handleUpdate = async (e) => {
-    //e.preventDefault()
     const taskDocRef = doc(db, 'hooks-tasks', data[i].id)
     console.log(data[i].completed);
     console.log(taskDocRef);
@@ -133,21 +106,9 @@ function App(){
         completed: !data[i].completed
       })
       console.log("data update sent");
-      //onClose()
     } catch (err) {
       alert(err)
-    }    
-  //}
-  //
-  console.log(i);
-  console.log(data[i].taskName);
-    console.log("about to toggle");
-    let newTasks = [...data];
-    console.log(newTasks);
-    newTasks[i].completed = !newTasks[i].completed;
-    console.log(newTasks[i]);
-    console.log(newTasks);
-    setData(newTasks);
+    }
   };
   const removeElement = async(i )=>{
     //
@@ -155,16 +116,10 @@ function App(){
     deleteDoc(taskDocRef)
     .then(() => {
       console.log("Entire Document has been deleted successfully.")
-  })
-  .catch(error => {
-    console.log(error);
-  })
-
-    //
-
-    let newTasks = [...data];
-    newTasks.splice(i,1);
-    setData(newTasks);
+    })
+    .catch(error => {
+      console.log(error);
+    })
   }
 
   return (
