@@ -109,6 +109,7 @@ function App(){
         console.log(dataLoaded);
       }
     })();
+    // eslint-disable-next-line
   }, []);
   return (
     <>
